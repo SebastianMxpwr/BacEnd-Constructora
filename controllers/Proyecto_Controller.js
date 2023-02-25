@@ -1,4 +1,6 @@
 const Proyecto = require('../Models/Proyectos_Model')
+const Tareas = require('../Models/Tarea_Model')
+const Personal = require('../Models/Personal_Model')
 
 const obtenerTodosProyectos = async(req, res)=>{
     try {
@@ -151,10 +153,97 @@ const obtenerTareasProyecto = async(req, res)=>{
     }
 }
 
+const estadisticasProyecto = async(req, res)=>{
+    try {
+        let {id} = req.params
+
+        if(!id){
+            res.status(404).send({
+                msg:'No se recibio ningun id o id valido',
+                cont: 0
+            })
+        }else{
+            const proyectoEncontrado = await Proyecto.findById(id)
+            if(!proyectoEncontrado){
+                res.status(404).send({
+                    msg:'No existe el proyecto',
+                    cont: 0
+                })
+            }else{
+                const ganancias = proyectoEncontrado.presupuestoTotal - (proyectoEncontrado.materialesEsperados + proyectoEncontrado.manoObra)
+                if(ganancias <= 0){
+                    res.status(200).send({
+                        msg: 'Ganancias en numeros rojos',
+                        ganancias: ganancias,
+                        materialesEsperados: proyectoEncontrado.materialesEsperados,
+                        ManoObra: proyectoEncontrado.manoObra
+                    })
+                }else{
+                    res.status(200).send({
+                        msg: 'Todavia hay ganancias',
+                        ganancias: ganancias,
+                        materialesEsperados: proyectoEncontrado.materialesEsperados,
+                        ManoObra: proyectoEncontrado.manoObra
+                    })
+                }
+            }
+        }
+    } catch (error) {
+        res.status(500).send({
+            msg: 'Error interno',
+            error: error.message
+        })
+    }
+}
+
+const estadisticasGenerales = async (req, res) => {
+    try {
+        const proyectos = await Proyecto.find({activo: true})
+        const jefes = await Personal.find({tipoEmpleado:{$ne: 'normal'}})
+        const personalNormal = await Personal.find({tipoEmpleado: 'normal'})
+        const personalTotal = await Personal.find()
+        const tareaTotales = await Tareas.find()
+
+        const gananciasProyectos = []
+
+        proyectos.forEach((e, i)=>{
+            const estadisticaNueva ={
+                ganacias: e.presupuestoTotal - (e.manoObra + e.materialesEsperados),
+                manoObra: e.manoObra,
+                materiales: e.materialesEsperados,
+                proyecto: e.nombre
+            }
+
+            gananciasProyectos.push(estadisticaNueva)
+        })
+
+        const filtro = tareaTotales.filter(tarea => tarea.completada == false)
+
+        res.status(200).send({
+            msg: 'Estadisticas obtenidas',
+            proyectosActivos: proyectos.length,
+            jefesOgerentes: jefes.length,
+            personalNormal: personalNormal.length,
+            totalPersonal: personalTotal.length,
+            gananciasPorProyectos: gananciasProyectos,
+            tareasCompletadas: filtro.length,
+            Totaltareas: tareaTotales.length
+        })
+
+    } catch (error) {
+        res.status(500).send({
+            msg: 'Error interno',
+            error: error.message
+        })
+    }
+}
+
 module.exports = {
     obtenerTodosProyectos,
     obtenerProyectosActivos,
     crearProyecto,
     borrarProyecto,
-    obtenerTareasProyecto
+    obtenerTareasProyecto,
+    estadisticasProyecto,
+    estadisticasGenerales
 }

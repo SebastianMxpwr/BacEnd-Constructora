@@ -1,5 +1,5 @@
-const Personal = require('../models/Personal_Model')
-const Area = require('../models/Area_Model')
+const Personal = require('../Models/Personal_Model')
+const Area = require('../Models/Area_Model')
 const bcrypt = require('bcrypt-nodejs')
 const fs = require('fs');
 const jwt = require('../helpers/jwt')

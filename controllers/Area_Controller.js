@@ -1,4 +1,4 @@
-const Area = require('../models/Area_Model')
+const Area = require('../Models/Area_Model')
 
 const obtenerAreas = async(req, res) =>{
     try {
