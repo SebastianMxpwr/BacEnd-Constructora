@@ -137,13 +137,14 @@ const registroPersonal = async(req, res) =>{
                 numeroTelefono,
                 area,
                 tipoEmpleado,
+                imgPerfil: req.file.path
             } 
             bcrypt.hash(contrasena,null,null, async(req,hash)=>{
                 if(hash){
                     nuevoPersonal.contrasena = hash
                     const personalAnadido = new Personal(nuevoPersonal)
                     await personalAnadido.save()
-                    const personalAnadidoarea = await Area.findOneAndUpdate({nombre: area}, {$push:{Trabajadores: nuevoPersonal._id}})
+                    const personalAnadidoarea = await Area.findOneAndUpdate({nombre: area}, {$push:{Trabajadores: personalAnadido._id}})
                     if(personalAnadido && personalAnadidoarea){
                         res.status(200).send({
                             msg:'Empleado Creado y agragado',
@@ -178,6 +179,71 @@ const registroPersonal = async(req, res) =>{
         res.status(500).send({
             msg:'Ocurrio un error interno, intene de nuevo',
             err: err.message
+        })
+    }
+}
+
+const actulizarPersonal = async (req, res)=>{
+    console.log(req.files);
+  
+
+    try {
+        let {id} = req.params
+        let {nombre, correo, numeroTelefono} = req.body
+        if(!id){
+            res.status(404).send({
+                msg: 'No se recibio un id valido',
+                cont: 0
+            })
+        }else{
+            const usuarioEncontrado = await Personal.findById(id)
+            if(!usuarioEncontrado){
+                res.status(404).send({
+                    msg: 'No existe tal usuario',
+                    cont: 0
+                })
+            }else{
+                const usuarioPut = {
+                    nombre,
+                    correo,
+                    numeroTelefono,
+                    imgPerfil: req.files[0].path,
+                    imgPortada: req.files[1].path
+                }
+
+
+                const usuarioActualizado = await Personal.findByIdAndUpdate(id,usuarioPut,{new: true})
+                if(!usuarioActualizado){
+                    res.status(500).send({
+                        msg: 'no se pudo actualizar el usuario, intente de nuevo',
+                        cont: 0
+                    })
+                }else{
+                    fs.unlink(usuarioEncontrado.imgPerfil, (err)=>{
+                        if(err){
+                            console.log(err);
+                        }
+                        console.log('imagen eliminada');
+                    })
+                    fs.unlink(usuarioEncontrado.imgPortada, (err)=>{
+                        if(err){
+                            console.log(err);
+                        }
+                        console.log('imagen eliminada');
+                    })
+                    res.status(200).send({
+                        msg: 'Exito al actualizar el empleado',
+                        cont: usuarioActualizado
+                    })
+                }
+                
+            }
+        }
+
+    } catch (error) {
+        res.status(500).send({
+            msg: 'Error interno',
+            cont: error.message
         })
     }
 }
@@ -222,5 +288,6 @@ module.exports = {
     obtenerPersonalID,
     personalLogin,
     registroPersonal,
+    actulizarPersonal,
     borrarPersonal
 }

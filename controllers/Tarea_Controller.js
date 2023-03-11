@@ -59,6 +59,11 @@ const crearTarea = async(req, res)=>{
         let {nombre, prioridad,proyecto, area, personaAsginada,
             semanasEsperadas, fechaLimite, detalles} = req.body
 
+        let paths = []
+        req.files.forEach(element => {
+            paths.push(element.path)
+        });
+        console.log(paths);
 
         const nuevaTarea = {
             nombre,
@@ -69,7 +74,7 @@ const crearTarea = async(req, res)=>{
             semanasEsperadas, 
             fechaLimite,
             detalles,
-            // adjuntos: req.file.path
+            adjuntos: paths
         }
 
         const tareaAgregada = new Tarea(nuevaTarea)

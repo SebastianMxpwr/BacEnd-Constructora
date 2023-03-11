@@ -1,6 +1,8 @@
 const Proyecto = require('../Models/Proyectos_Model')
 const Tareas = require('../Models/Tarea_Model')
 const Personal = require('../Models/Personal_Model')
+const fs = require('fs');
+
 
 const obtenerTodosProyectos = async(req, res)=>{
     try {
@@ -196,6 +198,77 @@ const estadisticasProyecto = async(req, res)=>{
     }
 }
 
+const actualizarProyecto = async(req, res)=>{
+    try {
+        let {id} = req.params
+        let {nombre, descripcion, presupuestoTotal, manoObra, materialesEsperados,tiempoProyectoSemanas, areaAsginada} = req. body
+
+        if(!id){
+            res.status(404).send({
+                msg: "no se recibio un id valido",
+                cont: 0
+            })
+        }else{
+            const proyectoEncontrado = await Proyecto.findById(id)
+            if(!proyectoEncontrado){
+                res.status(404).send({
+                    msg:'No existe el proyecto',
+                    cont: 0
+                })
+            }else{
+                let cambiosProyecto = {
+                    nombre,
+                    descripcion,
+                    presupuestoTotal,
+                    manoObra,
+                    materialesEsperados,
+                    tiempoProyectoSemanas,
+                    areaAsginada
+                }
+                if(!req.file){
+                    const proyectoActualizado = await Proyecto.findByIdAndUpdate(id, cambiosProyecto, {new:true})
+                    if(!proyectoActualizado){
+                        res.status(400).send({
+                            msg: 'No se pudo actualizar intente de nuevo',
+                            cont: 0
+                        })
+                    }else{
+                        res.status(200).send({
+                            msg: 'Proyecto Actualizado',
+                            cont: proyectoActualizado
+                        })
+                    }
+                }else{
+                    cambiosProyecto.imgProyecto = req.file.path
+                    const proyectoActualizado = await Proyecto.findByIdAndUpdate(id, cambiosProyecto, {new:true})
+                    if(!proyectoActualizado){
+                        res.status(400).send({
+                            msg: 'No se pudo actualizar intente de nuevo',
+                            cont: 0
+                        })
+                    }
+                    fs.unlink(proyectoEncontrado.imgProyecto, (err)=>{
+                        if(err){
+                            console.log(err);
+                        }
+                        console.log('imagen eliminada');
+                    })
+                    
+                    res.status(200).send({
+                        msg: 'Cambios completos hechos',
+                        cont: proyectoActualizado
+                    })
+                }
+            }
+        }
+    } catch (error) {
+        res.status(500).send({
+            msg: "Ocurri un error interno",
+            err: error.message
+        })
+    }
+}
+
 const estadisticasGenerales = async (req, res) => {
     try {
         const proyectos = await Proyecto.find({activo: true})
@@ -245,5 +318,6 @@ module.exports = {
     borrarProyecto,
     obtenerTareasProyecto,
     estadisticasProyecto,
-    estadisticasGenerales
+    estadisticasGenerales,
+    actualizarProyecto
 }

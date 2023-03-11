@@ -3,13 +3,13 @@ const {uuid} = require('uuidv4')
 const path = require('path')
 
 const storage = multer.diskStorage({
-    destination: 'uploads',
+    destination: 'uploads/cover_pictures',
     filename:(req, file, cb)=>{
         cb(null, uuid() + path.extname(file.originalname))
     }
 })
 
-const upload = multer({
+const upload_Cp = multer({
     storage: storage,
     fileFilter: (req, file, cb)=>{
         if(file.mimetype == "image/png" || file.mimetype == "image/jpeg" || file.mimetype == "image/jpg"){
@@ -21,4 +21,4 @@ const upload = multer({
     }
 })
 
-module.exports = upload
+module.exports = upload_Cp

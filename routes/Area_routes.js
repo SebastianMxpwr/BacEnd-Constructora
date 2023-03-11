@@ -1,7 +1,6 @@
 const Area_Controller = require('../controllers/Area_Controller')
 const express = require('express')
 const api = express()
-const upload = require('../helpers/multer')
 
 api.get('/area', Area_Controller.obtenerAreas)
 api.get('/areaId/:id', Area_Controller.obtenerAreaID)
